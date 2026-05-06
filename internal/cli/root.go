@@ -4,18 +4,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewRootCmd builds the root cobra command with all subcommands attached.
+// NewRootCmd builds the top-level cobra command with all subcommands attached.
 func NewRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "envchain",
-		Short: "Manage layered .env files with secret interpolation and diff support",
-		Long: `envchain loads, merges, and resolves layered .env files.
-Secrets can be pulled from AWS SSM or Vault using ref syntax: secret://provider/path`,
+		Short: "Manage layered .env files with secret interpolation",
 		SilenceUsage: true,
 	}
 
 	root.AddCommand(newPrintCmd())
 	root.AddCommand(newDiffCmd())
+	root.AddCommand(newRunCmd())
+	root.AddCommand(newValidateCmd())
 
 	return root
 }
