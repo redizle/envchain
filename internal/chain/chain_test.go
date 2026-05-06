@@ -66,3 +66,23 @@ func TestLoad_EmptyLayers(t *testing.T) {
 		t.Errorf("expected empty env, got %v", c.Env)
 	}
 }
+
+func TestLoad_LaterLayerWins(t *testing.T) {
+	dir := t.TempDir()
+	base := writeTempEnv(t, dir, ".env", "KEY=first\nONLY=base\n")
+	override := writeTempEnv(t, dir, ".env.override", "KEY=second\n")
+
+	c, err := chain.Load([]chain.Layer{
+		{Name: "base", Path: base},
+		{Name: "override", Path: override},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c.Env["KEY"] != "second" {
+		t.Errorf("KEY: want %q, got %q", "second", c.Env["KEY"])
+	}
+	if c.Env["ONLY"] != "base" {
+		t.Errorf("ONLY: want %q, got %q", "base", c.Env["ONLY"])
+	}
+}
