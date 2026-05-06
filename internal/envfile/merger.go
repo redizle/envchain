@@ -1,7 +1,22 @@
 package envfile
 
-// Merge combines multiple env maps in order, with later maps taking precedence.
-// Keys from later layers override keys from earlier layers.
+// ChangeType describes what happened to a key between two env maps.
+type ChangeType string
+
+const (
+	ChangeAdded    ChangeType = "added"
+	ChangeRemoved  ChangeType = "removed"
+	ChangeModified ChangeType = "modified"
+)
+
+// Change represents a single key-level difference between two env maps.
+type Change struct {
+	Type ChangeType
+	Old  string
+	New  string
+}
+
+// Merge combines multiple layers of env maps, with later layers taking precedence.
 func Merge(layers ...map[string]string) map[string]string {
 	result := make(map[string]string)
 	for _, layer := range layers {
@@ -12,40 +27,29 @@ func Merge(layers ...map[string]string) map[string]string {
 	return result
 }
 
-// DiffResult holds the changes between two env maps.
-type DiffResult struct {
-	Added   map[string]string
-	Removed map[string]string
-	Changed map[string][2]string // key -> [old, new]
-}
-
-// Diff computes the difference between a base env map and a new env map.
-func Diff(base, next map[string]string) DiffResult {
-	result := DiffResult{
-		Added:   make(map[string]string),
-		Removed: make(map[string]string),
-		Changed: make(map[string][2]string),
-	}
+// Diff computes the changes between a base env map and a new env map.
+// Returns a map of key -> Change for any keys that were added, removed, or modified.
+func Diff(base, next map[string]string) map[string]Change {
+	changes := make(map[string]Change)
 
 	for k, v := range next {
-		oldVal, exists := base[k]
-		if !exists {
-			result.Added[k] = v
+		if oldVal, ok := base[k]; !ok {
+			changes[k] = Change{Type: ChangeAdded, New: v}
 		} else if oldVal != v {
-			result.Changed[k] = [2]string{oldVal, v}
+			changes[k] = Change{Type: ChangeModified, Old: oldVal, New: v}
 		}
 	}
 
 	for k, v := range base {
-		if _, exists := next[k]; !exists {
-			result.Removed[k] = v
+		if _, ok := next[k]; !ok {
+			changes[k] = Change{Type: ChangeRemoved, Old: v}
 		}
 	}
 
-	return result
+	return changes
 }
 
-// HasChanges returns true if the DiffResult contains any additions, removals, or changes.
-func (d DiffResult) HasChanges() bool {
-	return len(d.Added) > 0 || len(d.Removed) > 0 || len(d.Changed) > 0
+// HasChanges returns true if the diff map contains any entries.
+func HasChanges(diff map[string]Change) bool {
+	return len(diff) > 0
 }
