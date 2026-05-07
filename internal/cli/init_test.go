@@ -14,11 +14,22 @@ func TestInitCmd_FlagsExist(t *testing.T) {
 	}
 }
 
+// changeDirTemp changes the working directory to dir and restores it on cleanup.
+func changeDirTemp(t *testing.T, dir string) {
+	t.Helper()
+	old, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get working directory: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("failed to chdir to %s: %v", dir, err)
+	}
+	t.Cleanup(func() { os.Chdir(old) })
+}
+
 func TestInitCmd_CreatesFiles(t *testing.T) {
 	dir := t.TempDir()
-	old, _ := os.Getwd()
-	defer os.Chdir(old)
-	os.Chdir(dir)
+	changeDirTemp(t, dir)
 
 	cmd := newInitCmd()
 	buf := &strings.Builder{}
@@ -42,9 +53,7 @@ func TestInitCmd_CreatesFiles(t *testing.T) {
 
 func TestInitCmd_SkipsExistingFiles(t *testing.T) {
 	dir := t.TempDir()
-	old, _ := os.Getwd()
-	defer os.Chdir(old)
-	os.Chdir(dir)
+	changeDirTemp(t, dir)
 
 	existing := filepath.Join(dir, "envchain.yaml")
 	os.WriteFile(existing, []byte("original"), 0644)
@@ -68,9 +77,7 @@ func TestInitCmd_SkipsExistingFiles(t *testing.T) {
 
 func TestInitCmd_ForceOverwrites(t *testing.T) {
 	dir := t.TempDir()
-	old, _ := os.Getwd()
-	defer os.Chdir(old)
-	os.Chdir(dir)
+	changeDirTemp(t, dir)
 
 	existing := filepath.Join(dir, "envchain.yaml")
 	os.WriteFile(existing, []byte("original"), 0644)
