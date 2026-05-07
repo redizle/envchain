@@ -8,8 +8,18 @@
 //   - dotenv: KEY="VALUE" with Go-style quoting
 //   - json:   { "KEY": "VALUE" } JSON object
 //
+// Formats can be selected by name using ParseFormat, which accepts the
+// string names listed above and returns an error for unrecognised values.
+//
 // Example usage:
 //
 //	vars := map[string]string{"FOO": "bar"}
 //	output.WriteEnv(os.Stdout, vars, output.FormatExport)
+//
+//	// Or using ParseFormat to select a format from user input:
+//	fmt, err := output.ParseFormat("json")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	output.WriteEnv(os.Stdout, vars, fmt)
 package output
