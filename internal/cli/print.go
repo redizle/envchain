@@ -33,11 +33,9 @@ func newPrintCmd() *cobra.Command {
 			}
 
 			if resolve {
-				reg := providers.NewRegistry()
-				r := secrets.NewResolver(reg)
-				env, err = r.Resolve(env)
+				env, err = resolveSecrets(env)
 				if err != nil {
-					return fmt.Errorf("resolve secrets: %w", err)
+					return err
 				}
 			}
 
@@ -50,4 +48,16 @@ func newPrintCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&resolve, "resolve", false, "resolve secret references")
 
 	return cmd
+}
+
+// resolveSecrets resolves any secret references in the given environment map
+// using the default provider registry.
+func resolveSecrets(env map[string]string) (map[string]string, error) {
+	reg := providers.NewRegistry()
+	r := secrets.NewResolver(reg)
+	resolved, err := r.Resolve(env)
+	if err != nil {
+		return nil, fmt.Errorf("resolve secrets: %w", err)
+	}
+	return resolved, nil
 }
