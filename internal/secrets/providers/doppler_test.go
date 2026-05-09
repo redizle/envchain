@@ -54,15 +54,23 @@ func TestDopplerProvider_Resolve_NotFound(t *testing.T) {
 func TestDopplerProvider_Resolve_BadRef(t *testing.T) {
 	p := NewDopplerProvider("tok")
 
-	_, err := p.Resolve(context.Background(), "bad-ref")
-	if err == nil {
-		t.Fatal("expected error for malformed ref")
+	// Test various malformed refs that don't match the expected project/config/name format.
+	badRefs := []string{
+		"bad-ref",
+		"only/two",
+		"",
+	}
+	for _, ref := range badRefs {
+		_, err := p.Resolve(context.Background(), ref)
+		if err == nil {
+			t.Errorf("expected error for malformed ref %q, got nil", ref)
+		}
 	}
 }
 
 func TestDopplerProvider_Resolve_MultipleSecrets(t *testing.T) {
 	client := &stubDopplerClient{secrets: map[string]string{
-		"proj/staging/API_KEY":  "key-abc",
+		"proj/staging/API_KEY":    "key-abc",
 		"proj/staging/API_SECRET": "sec-xyz",
 	}}
 	p := NewDopplerProviderWithClient("tok", client)
