@@ -19,6 +19,10 @@ func newInterpolateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "interpolate",
 		Short: "Resolve ${VAR} references within the merged env",
+		Long: `Loads the env chain defined in the config file, merges all sources,
+then resolves any $\{VAR\} or $VAR references found in values.
+
+Unresolved references are printed as warnings. Use --strict to treat them as errors.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := chain.LoadConfig(configPath)
 			if err != nil {
